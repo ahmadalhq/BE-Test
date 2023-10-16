@@ -1,3 +1,5 @@
+const WebSocketServer = require("ws").Server;
+const { default: axios } = require("axios");
 const db = require("../models");
 // const Model = db.Model;
 // const { Op } = require("sequelize");
@@ -119,41 +121,86 @@ exports.callmeWebSocket = (req, res) => {
   const interval = 180000 
   const https = require('https')
 
-  async function fetchData() {
-    https.get(url, res => {
-      let data = '';
-      res.on('data', resp => {
-        data += resp;
-      });
-      res.on('end', () => {
-        data = JSON.parse(data);
-        db.attack.destroy({
-          where: {},
-        })
-        for (i = 0; i < data.length; i++) {
-          data[i].forEach(value => {
-            db.attack.create({
-              sourceCountry: value.sourceCountry,
-              destinationCountry: value.destinationCountry,
-              millisecond: value.millisecond,
-              type: value.type,
-              weight: value.weight,
-              attackTime: value.attackTime
-            })
-            .then(() => {
-              res.status(201)
-            })
-            .catch(err => {
-              return err
-            })       
-          });
-        }
-      })
-      console.log(`data fetched`)
-    }).on('error', err => {
-      console.log(err.message);
-    })
+  // const port = 4000
+  // const serverWs = https.createServer()
+
+  // serverWs.listen(port, () => {
+  //   console.log(`Websocket server is running on port: ${port}`)
+  // })
+
+  // const wss = new WebSocketServer({server: serverWs})
+
+  const fetchData =  async () => {
+    try {
+      const response = await axios.get(url);
+      const attacks = response.data;
+      console.log(attacks)
+      return attacks
+    } catch(error) {
+      console.error('Error fetching data', error);
+    }
   }
+
+  fetchData()
+    .then((attacks) => {
+      const dataToSend = JSON.stringify(attacks);
+
+      // Broadcast the data to all connected WebSocket clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(dataToSend);
+        }
+      });
+    })
+    .catch((error) => {
+      console.error('Failed to fetch and send data:', error.message);
+    });
+
+  // wss.on('request', () => {
+  //   fetchData();
+  //   const intervalFetch = setInterval(fetchData, interval);
+
+  //   connection.on('close', () => {
+  //     clearInterval(intervalFetch)
+  //     console.log('Connection closed')
+  //   })
+  // })
+
+  // async function fetchData() {
+  //   https.get(url, res => {
+  //     let data = '';
+  //     res.on('data', resp => {
+  //       data += resp;
+  //     });
+  //     res.on('end', () => {
+  //       data = JSON.parse(data);
+  //       db.attack.destroy({
+  //         where: {},
+  //       })
+  //       for (i = 0; i < data.length; i++) {
+  //         data[i].forEach(value => {
+  //           db.attack.create({
+  //             sourceCountry: value.sourceCountry,
+  //             destinationCountry: value.destinationCountry,
+  //             millisecond: value.millisecond,
+  //             type: value.type,
+  //             weight: value.weight,
+  //             attackTime: value.attackTime
+  //           })
+  //           .then(() => {
+  //             res.status(201)
+  //           })
+  //           .catch(err => {
+  //             return err
+  //           })       
+  //         });
+  //       }
+  //     })
+  //     console.log(`data fetched`)
+  //   }).on('error', err => {
+  //     console.log(err.message);
+  //   })
+  // }
 
   // fetchData()
 
