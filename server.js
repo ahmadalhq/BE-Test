@@ -35,10 +35,13 @@ app.get("/", (req, res) => {
 });
 
 // routes
-// require("./app/routes/exaole.routes")(app);
+require("./app/routes/exampleRoutes")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 7878;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
+
+const exampleController = require("./app/controllers/exampleController")
+exampleController.callmeWebSocket()
