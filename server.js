@@ -39,7 +39,7 @@ app.get("/", (req, res) => {
 // routes
 require("./app/routes/exampleRoutes")(app);
 
-const http = require('http')
+// const http = require('http')
 const port = 4000
 const serverWs = http.createServer(app)
 const interval = 180000 
